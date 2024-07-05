@@ -631,7 +631,7 @@ func (g *OpenAPIv3Generator) buildOperationV3(
 				requestSchema = g.reflect.schemaOrReferenceForMessage(inputMessage.Desc)
 			} else {
 				// Generate a request body schema without the coveredParameters
-				requestSchema = g.addSchemaForRequestBodyToDocumentV3(d, inputMessage, coveredParameters, "The body of "+operationID)
+				requestSchema = g.addSchemaForRequestBodyToDocumentV3(d, inputMessage, coveredParameters, operationID)
 			}
 		} else {
 			// If body refers to a message field, use that type.
@@ -679,8 +679,8 @@ func (g *OpenAPIv3Generator) buildOperationV3(
 	return op, path
 }
 
-func (g *OpenAPIv3Generator) addSchemaForRequestBodyToDocumentV3(d *v3.Document, inputMessage *protogen.Message, ignoreFields []string, description string) *v3.SchemaOrReference { // We need to create a schema that does not include the path parameters, "The body of "+operationID.
-	schemaName := g.reflect.formatMessageName(inputMessage.Desc) + "_Body"
+func (g *OpenAPIv3Generator) addSchemaForRequestBodyToDocumentV3(d *v3.Document, inputMessage *protogen.Message, ignoreFields []string, operation string) *v3.SchemaOrReference { // We need to create a schema that does not include the path parameters, "The body of "+operationID.
+	schemaName := fmt.Sprintf("%sBody", operation)
 	ref := "#/components/schemas/" + schemaName
 
 	if !contains(g.reflect.requiredSchemas, schemaName) {
@@ -697,8 +697,7 @@ func (g *OpenAPIv3Generator) addSchemaForRequestBodyToDocumentV3(d *v3.Document,
 			fs = append(fs[:i], fs[i+1:]...)
 		}
 	}
-	typeName := g.reflect.fullMessageTypeName(inputMessage.Desc)
-	g.addSchemaWithFieldsToDocumentV3(d, schemaName, fs, typeName+"_Body", description, inputMessage.Desc.Options())
+	g.addSchemaWithFieldsToDocumentV3(d, schemaName, fs, schemaName, fmt.Sprintf("The body of %s", operation), inputMessage.Desc.Options())
 
 	requestSchema := &v3.SchemaOrReference{
 		Oneof: &v3.SchemaOrReference_Reference{
